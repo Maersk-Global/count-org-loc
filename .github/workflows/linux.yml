@@ -11,7 +11,7 @@ on:
         required: false
         default: ''
 env:
-  GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 jobs:
   test:
     if: ${{ github.event.inputs.test_org_name != '' }}
