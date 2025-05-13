@@ -11,7 +11,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
 jobs:
   run:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -28,6 +28,6 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: script/count ${{ inputs.org_or_user }}
       
-      - name: default count
-        if: github.event_name != 'workflow_dispatch'
-        run: script/count balter-test-org
+      # - name: default count
+      #   if: github.event_name != 'workflow_dispatch'
+      #   run: script/count balter-test-org
