@@ -14,6 +14,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
 jobs:
   test:
+    if: ${{ github.event.inputs.test_org_name != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,6 +35,7 @@ jobs:
             bundle exec ruby loc.rb "$org"
           done
   prod:
+    if: ${{ github.event.inputs.prod_org_name != '' }}
     timeout-minutes: 60
     needs: test
     #May need to add a "Pay as you go", larger GitHub-hosted runner depending on the size of each repo
