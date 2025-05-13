@@ -52,7 +52,12 @@ repos.each do |repo|
   next unless status.exitstatus.zero?
 
   _output, _status = cloc destination, '--quiet', "--report-file=#{report_file}"
-  reports.push(report_file) if File.exist?(report_file) && status.exitstatus.zero?
+  if File.exist?(report_file) && status.exitstatus.zero?
+    reports.push(report_file)
+    # Delete the repository directory after report is generated successfully
+    FileUtils.rm_rf(destination)
+    puts "  Repository cleaned up: #{repo.name}"
+  end
 end
 
 puts 'Done. Summing...'
