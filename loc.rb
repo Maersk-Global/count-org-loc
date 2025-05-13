@@ -18,6 +18,24 @@ def cloc(*args)
   Open3.capture2e(cloc_path, *args)
 end
 
+# Check rate limit and wait if necessary
+def check_rate_limit(client)
+  rate_limit = client.rate_limit
+  remaining = rate_limit.remaining
+  reset_time = rate_limit.resets_at
+  
+  if remaining <= 10
+    wait_time = [reset_time - Time.now, 0].max
+    puts "Rate limit nearly exceeded! Remaining: #{remaining}"
+    puts "Waiting for #{wait_time.round} seconds until rate limit resets at #{reset_time}"
+    sleep(wait_time + 1) # Add 1 second buffer
+    
+    # Recheck rate limit after waiting
+    new_rate_limit = client.rate_limit
+    puts "Rate limit reset. New remaining requests: #{new_rate_limit.remaining}"
+  end
+end
+
 tmp_dir = File.expand_path './tmp', File.dirname(__FILE__)
 FileUtils.rm_rf tmp_dir
 FileUtils.mkdir_p tmp_dir
@@ -33,15 +51,26 @@ client = Octokit::Client.new access_token: ENV['GITHUB_TOKEN']
 client.auto_paginate = true
 
 begin
+  check_rate_limit(client) # Check rate limit before fetching repos
   repos = client.organization_repositories(ARGV[0].strip, type: 'sources')
-rescue StandardError
-  repos = client.repositories(ARGV[0].strip, type: 'sources')
+rescue StandardError => e
+  if e.message.include?('rate limit')
+    # Handle specific rate limit error
+    check_rate_limit(client)
+    # Try again after waiting
+    repos = client.organization_repositories(ARGV[0].strip, type: 'sources')
+  else
+    repos = client.repositories(ARGV[0].strip, type: 'sources')
+  end
 end
 puts "Found #{repos.count} repos. Counting..."
 
 reports = []
 repos.each do |repo|
   puts "Counting #{repo.name}..."
+  
+  # Check rate limit before cloning
+  check_rate_limit(client)
 
   destination = File.expand_path repo.name, tmp_dir
   report_file = File.expand_path "#{repo.name}.txt", tmp_dir
